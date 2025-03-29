@@ -160,6 +160,54 @@ const char* getFrontmostApplication() {
     }
 }
 
+const char* getMenuBarOwningApplication() {
+    @autoreleasepool {
+        NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+        NSRunningApplication *app = workspace.menuBarOwningApplication;
+
+        if (!app) {
+            return NULL;
+        }
+
+        NSMutableDictionary *appInfo = [NSMutableDictionary dictionary];
+
+        if (app.bundleIdentifier) {
+            appInfo[@"bundleIdentifier"] = app.bundleIdentifier;
+        }
+
+        if (app.localizedName) {
+            appInfo[@"localizedName"] = app.localizedName;
+        }
+
+        if (app.executableURL) {
+            appInfo[@"executableURL"] = app.executableURL.path;
+        }
+
+        appInfo[@"processIdentifier"] = @(app.processIdentifier);
+
+        if (app.launchDate) {
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZ"];
+            appInfo[@"launchDate"] = [formatter stringFromDate:app.launchDate];
+        }
+
+        NSError *error = nil;
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appInfo
+                                                           options:0
+                                                             error:&error];
+
+        if (!jsonData) {
+            NSLog(@"Error creating JSON: %@", error);
+            return NULL;
+        }
+
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData
+                                                     encoding:NSUTF8StringEncoding];
+
+        return strdup([jsonString UTF8String]);
+    }
+}
+
 void freeString(const char* str) {
     if (str != NULL) {
         free((void*)str);

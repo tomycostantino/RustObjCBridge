@@ -11,6 +11,15 @@ fn run_examples() {
     println!("MacOS NSWorkspace Example");
     println!("------------------------");
 
+    // Get menu bar owning application
+    match workspace.get_menu_bar_owning_application() {
+        Ok(Some(app)) => {
+            println!("Menu bar owning application: {}", app.localized_name);
+        },
+        Ok(None) => println!("No menu bar owning application found"),
+        Err(e) => println!("Error getting menu bar owning application: {}", e),
+    }
+
     // Get frontmost application
     match workspace.get_frontmost_application() {
         Ok(Some(app)) => {

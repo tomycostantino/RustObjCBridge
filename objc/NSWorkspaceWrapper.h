@@ -21,6 +21,8 @@ bool unhideApplication(const char* bundleIdentifier);
 
 const char* getFrontmostApplication();
 
+const char* getMenuBarOwningApplication();
+
 void freeString(const char* str);
 
 #ifdef __cplusplus
