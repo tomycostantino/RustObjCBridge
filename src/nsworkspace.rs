@@ -11,6 +11,7 @@ unsafe extern "C" {
     fn getRunningApplications() -> *const c_char;
     fn hideApplication(bundleIdentifier: *const c_char) -> bool;
     fn unhideApplication(bundleIdentifier: *const c_char) -> bool;
+    fn getFrontmostApplication() -> *const c_char;
     fn freeString(str: *const c_char);
 }
 
@@ -137,6 +138,44 @@ impl NSWorkspace {
         let result = unsafe { unhideApplication(c_bundle_id.as_ptr()) };
         Ok(result)
     }
+    pub fn get_frontmost_application(&self) -> Result<Option<FrontmostApp>, String> {
+        let json_ptr = unsafe { getFrontmostApplication() };
+
+        if json_ptr.is_null() {
+            return Ok(None);
+        }
+
+        let json_str = unsafe {
+            let result = CStr::from_ptr(json_ptr).to_string_lossy().into_owned();
+            freeString(json_ptr);
+            result
+        };
+
+        let json_value: Value = match from_str(&json_str) {
+            Ok(v) => v,
+            Err(_) => return Err("Failed to parse frontmost application JSON".to_string()),
+        };
+
+        let app = FrontmostApp {
+            bundle_identifier: json_value.get("bundleIdentifier")
+                .and_then(|v| v.as_str())
+                .unwrap_or("").to_string(),
+            localized_name: json_value.get("localizedName")
+                .and_then(|v| v.as_str())
+                .unwrap_or("").to_string(),
+            executable_path: json_value.get("executableURL")
+                .and_then(|v| v.as_str())
+                .unwrap_or("").to_string(),
+            process_id: json_value.get("processIdentifier")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0) as u32,
+            launch_date: json_value.get("launchDate")
+                .and_then(|v| v.as_str())
+                .unwrap_or("").to_string(),
+        };
+
+        Ok(Some(app))
+    }
 }
 
 /// Structure representing a running application
@@ -145,4 +184,14 @@ pub struct RunningApp {
     pub bundle_identifier: String,
     pub localized_name: String,
     pub executable_path: String,
+}
+
+/// Structure representing the frontmost (active) application
+#[derive(Debug, Clone)]
+pub struct FrontmostApp {
+    pub bundle_identifier: String,
+    pub localized_name: String,
+    pub executable_path: String,
+    pub process_id: u32,
+    pub launch_date: String,
 }

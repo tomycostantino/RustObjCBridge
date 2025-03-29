@@ -131,6 +131,35 @@ bool unhideApplication(const char* bundleIdentifier) {
     }
 }
 
+const char* getFrontmostApplication() {
+    @autoreleasepool {
+        NSRunningApplication *frontmostApp = [[NSWorkspace sharedWorkspace] frontmostApplication];
+
+        if (frontmostApp == nil) {
+            return NULL;
+        }
+
+        NSDictionary *appInfo = @{
+            @"bundleIdentifier": frontmostApp.bundleIdentifier ?: @"",
+            @"localizedName": frontmostApp.localizedName ?: @"",
+            @"executableURL": frontmostApp.executableURL.path ?: @"",
+            @"processIdentifier": @(frontmostApp.processIdentifier),
+            @"launchDate": frontmostApp.launchDate ? [NSString stringWithFormat:@"%@", frontmostApp.launchDate] : @""
+        };
+
+        NSError *error = nil;
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appInfo options:0 error:&error];
+
+        if (error || jsonData == nil) {
+            return NULL;
+        }
+
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        const char *result = strdup([jsonString UTF8String]);
+        return result;
+    }
+}
+
 void freeString(const char* str) {
     if (str != NULL) {
         free((void*)str);

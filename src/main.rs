@@ -2,12 +2,30 @@ mod nsworkspace;
 use nsworkspace::NSWorkspace;
 
 fn main() {
+    run_examples();
+}
+
+fn run_examples() {
     let workspace = NSWorkspace::new();
 
     println!("MacOS NSWorkspace Example");
     println!("------------------------");
 
-    // Example 1: Get all running applications
+    // Get frontmost application
+    match workspace.get_frontmost_application() {
+        Ok(Some(app)) => {
+            println!("\nFrontmost Application:");
+            println!("Name: {}", app.localized_name);
+            println!("Bundle ID: {}", app.bundle_identifier);
+            println!("Path: {}", app.executable_path);
+            println!("Process ID: {}", app.process_id);
+            println!("Launch Date: {}", app.launch_date);
+        },
+        Ok(None) => println!("\nNo frontmost application found"),
+        Err(e) => println!("\nError getting frontmost application: {}", e),
+    }
+
+    // Get all running applications
     match workspace.get_running_applications() {
         Ok(apps) => {
             println!("\nRunning Applications:");
@@ -18,7 +36,7 @@ fn main() {
         Err(e) => println!("Error getting running applications: {}", e),
     }
 
-    // Example 2: Open Safari
+    // Open Safari
     let safari_bundle_id = "com.apple.Safari";
     match workspace.launch_application(safari_bundle_id) {
         Ok(true) => println!("\nSuccessfully launched Safari"),
@@ -26,14 +44,14 @@ fn main() {
         Err(e) => println!("\nError launching Safari: {}", e),
     }
 
-    // Example 3: Get path for an application
+    // Get path for an application
     match workspace.get_application_path("com.apple.finder") {
         Ok(Some(path)) => println!("\nFinder path: {}", path),
         Ok(None) => println!("\nCould not find Finder path"),
         Err(e) => println!("\nError getting Finder path: {}", e),
     }
 
-    // Example 4: Open a URL
+    // Open a URL
     match workspace.open_url("https://www.rust-lang.org") {
         Ok(true) => println!("\nSuccessfully opened Rust website"),
         Ok(false) => println!("\nFailed to open Rust website"),

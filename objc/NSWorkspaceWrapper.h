@@ -19,6 +19,8 @@ bool hideApplication(const char* bundleIdentifier);
 
 bool unhideApplication(const char* bundleIdentifier);
 
+const char* getFrontmostApplication();
+
 void freeString(const char* str);
 
 #ifdef __cplusplus
